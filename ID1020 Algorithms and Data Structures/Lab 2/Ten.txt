@@ -1,0 +1,3 @@
+a) Insertion sort
+b) Insertion sort
+c) Same

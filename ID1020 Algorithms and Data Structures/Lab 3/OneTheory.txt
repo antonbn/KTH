@@ -1,0 +1,41 @@
+1) H O C E A L W
+BST:		RedBlack:
+H			H
+
+H			H-O
+|\
+  O			H
+			|\
+H			C O
+|\
+C O			  H
+			  |\
+H			C-E O
+|\
+C O			C-H
+|\			|\ \
+  E			A E O
+			
+H			-H- 
+|\			|  \
+A O			C   O
+|\			|\  |\
+  C			A E L W
+  |\		
+    E		
+			
+H			
+|\
+A L
+|\ \
+  C O
+  |\
+    E
+	
+H
+|\
+A L
+|\ \
+  C O
+  |\ \
+    E W

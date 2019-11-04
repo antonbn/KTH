@@ -1,0 +1,1 @@
+It takes 3 comparisons and 2 swaps

@@ -1,0 +1,87 @@
+% Very simple template for lab reports. Most common packages are already included.
+\documentclass[a4paper, 11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{parskip}
+\usepackage{url}
+
+%opening
+\title{Routy --- A small routing protocol}
+\author{Anton Bothin}
+\date{\today{}}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The assignment was to implement a link-state routing protocol in Erlang.
+
+The goal of the assignment was to gain knowledge of the structure of a link-state routing protocol, to understand how a consistent view is maintained, and to reflect on some of the problems that relates to network failures.
+
+\section{Main problems, solutions and evaluation}
+
+\subsection{Map}
+
+The map is used to represent the network. The structure is implemented as a list of tuples containing two elements: the name of a node, and a list of nodes reachable from that particular node. 
+
+The map module consists of the following functions: \texttt{new/0, update/3, reachable/2, all\_nodes/1}.
+
+\begin{itemize}
+
+\item \texttt{new()} simply creates an empty list.
+
+\item \texttt{update(Node, Links, Map)} removes the previous entry for \texttt{Node} (if it exists) and appends a new entry with the new list of reachable nodes.
+
+\item \texttt{reachable(Node, Map)} returns a list of all nodes reachable from \texttt{Node}.
+
+\item \texttt{all\_nodes(Map)} returns a list of all nodes in the Map. This includes nodes that do not have their own entry, that is to say nodes that can be reached but can themselves not reach any other node. A small problem encountered during the implementation of this function was that I needed to make sure that no duplicate entries were returned. This was solved crudely by checking \texttt{lists:member/2} before adding a node to the list.
+
+\end{itemize}
+
+\subsection{Dijkstra}
+
+The dijkstra module is used to create the routing table. It contains four help functions: \texttt{entry/2, replace/4, update/4, iterate/3}, and two exported functions: \texttt{table/2, route/2}.
+
+\begin{itemize}
+
+\item \texttt{entry(Node, Sorted)} return the shortest amount of hops to reach \texttt{Node}. If there is no entry with \texttt{Node} then 0 is returned instead, this later guarantees that \texttt{update/4} won't add a node that is not already in the routing table.
+
+\item \texttt{replace(Node, N, Gateway, Sorted)} replaces an already existing node in \texttt{Sorted} with a new entry with the updated \texttt{N} and \texttt{Gateway} values. The returned list will still be sorted by inserting the value in its correct place straight away. Technically \texttt{replace/4} will still work even if the node entry doesn't already exist. This doesn't matter in the implementation through, since \texttt{replace/4} is only called if \texttt{entry/2} returns a greater \texttt{N}. 
+
+\item \texttt{update(Node, N, Gateway, Sorted)} uses the previously described \texttt{entry/2} and \texttt{replace/4} to update an entry only if the new entry has a lesser \texttt{N} than the previous.
+
+\item \texttt{iterate(Sorted, Map, Table)} goes through \texttt{Sorted}, during each iteration it takes the first entry on the form \texttt{\{Node, N, Gateway\}} and uses \texttt{Map} to see which nodes can be reached from \texttt{Node}. \texttt{Sorted} is then updated for each reachable node with a new value of \texttt{N + 1}, because of how \texttt{update/4} is implemented this new entry will only be added if \texttt{N + 1} is less than the previous length. The built in function \texttt{lists:foldl/3} was useful here since I could avoid unnecessary help functions. The routing table is returned either once there are no elements left \texttt{Sorted} or once an entry with an infinite length is encountered.
+
+\item \texttt{table(Gateways, Map)} is the function that constructs the routing table. The first step is to generate \texttt{Sorted}, for each gateway an entry on the form \texttt{\{gateway, 0, gateway\}} is added, and for all nodes in \texttt{Map} an entry on the form \texttt{\{node, inf, unknown\}} is added. After this \texttt{iterate/3} is called with an empty routing table.
+
+\item \texttt{route(Node, Table)} checks if the routing table contains an entry for \texttt{Node}. If it does the gateway for that node is returned, otherwise \texttt{notfound} is returned.
+
+\end{itemize}
+
+\subsection{Interface}
+
+Each router need to keep track of its current interfaces. These are stored in a list containing tuples with the structure \texttt{\{Name, Ref, Pid\}}. The intf module contains useful functions for looking up values and broadcasting messages. The implementation of these functions was very straightforward and didn't pose any sort of problem.
+
+\subsection{History}
+
+Each router also has to keep track of its history, this is to prevent circular loops. It would however be a waste of resources to store each message, therefor messages are marked with an incremental number. If a router receives a message with lower number and from the same node as an entry in the history, this message is disgarded. The hist module contains two functions: \texttt{new/1}, and \texttt{update/3}.
+
+\begin{itemize}
+
+\item \texttt{new(Name)} returns a list containing a single entry: \texttt{\{Name, inf\}}. This is because a router should discard all messages that have looped back to itself.
+
+\item \texttt{update(Node, N, History)} should return \texttt{old} if \texttt{N} is less than the length stored in the history. If no entry exists or if \texttt{N} is greater, \texttt{\{new, Updated\}} should be returned, where \texttt{Updated} is the new history with an updated entry for \texttt{Node}. A problem I had creating this function was the fact that it should return a tuple, making it hard to append values during the recursion. This was solved by using \texttt{lists:keyfind/3} and \texttt{lists:keydelete/3}, but this solution resulted in an increased runtime.
+
+\end{itemize}
+
+\subsection{Router}
+
+The code for the routy module was already provided, all that was left was putting it together and testing the application.
+
+\section{Conclusions}
+
+I think this assignment did a great job of showing how a network of routers is built up and how routers communicate with each other. It was easy to understand how routers propegate information they have received throughout the network to maintain a consistent view. This was however not the case when a router received a 'DOWN' message, this information was not propegated which resulted in messages not getting to their destination when testing.
+
+\end{document}

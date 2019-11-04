@@ -1,0 +1,6 @@
+{
+  []
+  (
+    { <-- missing end bracket
+  )
+}

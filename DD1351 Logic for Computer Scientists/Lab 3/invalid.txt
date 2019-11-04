@@ -1,0 +1,21 @@
+% Adjacency lists of LTS
+[
+[s0, [s1]],
+[s1, [s1, s2]],
+[s2, [s3]], 
+[s3, [s3, s4]],
+[s4, [s6]],
+[s6, [s5, s7]],
+[s5, [s5, s4]],
+[s7, [s1]] 
+].
+% Labeling of LTS
+[
+[s0, [s]], [s1, [v]], [s2, [k]],
+[s3, [v]], [s4, [p]], [s5, [b]], 
+[s6, [j]], [s7, [g]]
+].
+% Starting state
+s4.
+% Rule to check
+af(g).

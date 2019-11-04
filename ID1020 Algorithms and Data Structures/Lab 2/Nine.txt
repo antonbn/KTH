@@ -1,0 +1,2 @@
+Insertion sort
+i = 3 (the fourth iteration) (unless it just happened to be already partially sorted)
